@@ -24,6 +24,27 @@ DAPS (Dimensionally Adaptive Prime Search) is a novel optimization algorithm des
 
 Python implementation can be found in `base.py`
 
+---
+
+## ⚠️ Known Issues & Roadmap
+
+🚧 **Cython Integration & Packaging (Work in Progress)**  
+While DAPS is fully functional in pure Python (`base.py`) mode, the **C++/Cython binding** (`_daps.pyx`) and **`pip install` packaging** are currently under active development. Some users may encounter build issues when installing from source.
+
+✅ **Current Stable Usage:**  
+- Use `base.py` directly for testing and benchmarking.
+- Python API and test cases in `examples/` and `tests/` run smoothly.
+
+🔄 **Upcoming Fixes:**
+- Resolve Cython build errors for seamless `pip install daps`.
+- Finalize Python wheel distribution.
+- CI/CD pipeline for PyPI release.
+
+Stay tuned for updates! 
+Track progress or report bugs here: [https://github.com/sethuiyer/DAPS/issues](https://github.com/sethuiyer/DAPS/issues)
+
+---
+
 ### Run Locally
 
 ```bash
