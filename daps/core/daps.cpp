@@ -1,5 +1,4 @@
 // daps/core/daps.cpp
-
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -26,53 +25,6 @@ struct DAPSResult {
 // External Python callback function declaration
 extern "C" bool call_python_callback(const std::vector<double>& x, double fun_val, int evals, void* py_callback_ptr);
 
-// Factory function that creates a wrapper around a Python function for 1D
-inline std::function<double(double, double, double)> create_1d_py_func_wrapper(void* py_func_ptr) {
-    return [py_func_ptr](double x, double /* unused y */, double /* unused z */) -> double {
-        std::vector<double> coords = {x, 0.0, 0.0}; // Only x is used
-        double result = 0.0;
-
-        // Call into Python with evals = -1 to indicate 1D function evaluation
-        // The result will be stored in the first element of coords
-        call_python_callback(coords, 0.0, -1, py_func_ptr);
-
-        // Return the result from the first element (set by Python callback)
-        result = coords[0];
-        return result;
-    };
-}
-
-// Factory function that creates a wrapper around a Python function for 2D
-inline std::function<double(double, double, double)> create_2d_py_func_wrapper(void* py_func_ptr) {
-    return [py_func_ptr](double x, double y, double /* unused z */) -> double {
-        std::vector<double> coords = {x, y, 0.0}; // Only x and y are used
-        double result = 0.0;
-
-        // Call into Python with evals = -2 to indicate 2D function evaluation
-        // The result will be stored in the first element of coords
-        call_python_callback(coords, 0.0, -2, py_func_ptr);
-
-        // Return the result from the first element (set by Python callback)
-        result = coords[0];
-        return result;
-    };
-}
-
-// Factory function that creates a wrapper around a Python function for 3D
-inline std::function<double(double, double, double)> create_3d_py_func_wrapper(void* py_func_ptr) {
-    return [py_func_ptr](double x, double y, double z) -> double {
-        std::vector<double> coords = {x, y, z}; // All three coordinates are used
-        double result = 0.0;
-
-        // Call into Python with evals = -3 to indicate 3D function evaluation
-        // The result will be stored in the first element of coords
-        call_python_callback(coords, 0.0, -3, py_func_ptr);
-
-        // Return the result from the first element (set by Python callback)
-        result = coords[0];
-        return result;
-    };
-}
 
 // Simple prime number generator (for small primes)
 inline int get_prime(int n) {
@@ -153,7 +105,7 @@ inline double rastrigin_function(double x, double y, double z) {
 
 // Generic DAPS Algorithm for 1D, 2D, and 3D
 inline DAPSResult daps_optimize(
-    std::function<double(double, double, double)> func,
+    double (*func)(double, double, double),  // Function pointer
     double x_min, double x_max,
     double y_min, double y_max,
     double z_min, double z_max,

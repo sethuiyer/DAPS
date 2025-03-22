@@ -7,12 +7,13 @@ import numpy as np
 cimport numpy as np
 from libcpp.vector cimport vector
 from libcpp.functional cimport function
-# NEW: Import bool from libcpp (not cpp_bool)
-from libcpp cimport bool
+from libcpp cimport bool # Use standard bool from libcpp
 
-# Import DAPSFunction *within* the Cython file
 from .function import DAPSFunction, recursive_fractal_cliff_valley_func, rosenbrock_3d_func, sphere_func, ackley_3d_func, rastrigin_func
 
+
+# Define the signatures that the built in test functions must have, this allows the functions to be callable by the optimizer
+ctypedef double (*objective_func_ptr)(double, double, double)
 
 # -------------------------------------------------------------
 # Extern declarations for C++ functions/structs
@@ -30,9 +31,9 @@ cdef extern from "daps.cpp":
         int final_prime_idx_z
         int dimensions
 
-    # DAPS Optimization function declaration
+    # DAPS Optimization function declaration.  VERY IMPORTANT: use correct function pointer type!
     DAPSResult daps_optimize(
-        function[double(double,double,double)] func,
+        objective_func_ptr func,  # Use the typedef-ed function pointer type
         double x_min, double x_max,
         double y_min, double y_max,
         double z_min, double z_max,
@@ -233,8 +234,7 @@ def daps_minimize(func, bounds=None, options=None):
         z_min = bounds[4]
         z_max = bounds[5]
 
-
-    cdef function[double(double,double,double)] cpp_func
+    cdef objective_func_ptr cpp_func
 
     if func is recursive_fractal_cliff_valley_func:
         cpp_func = recursive_fractal_cliff_valley
@@ -246,10 +246,14 @@ def daps_minimize(func, bounds=None, options=None):
         cpp_func = ackley_function
     elif func is rastrigin_func:
         cpp_func = rastrigin_function
-    else: # Use the wrapped function.
-        cpp_func = daps_func._wrapped_func
-
-
+    # NEW: Use the DAPSFunction wrapper for other functions
+    else:
+      if dimensions == 1:
+          cpp_func = daps_func._wrapped_func
+      elif dimensions == 2:
+          cpp_func = daps_func._wrapped_func
+      else: # dimensions == 3
+          cpp_func = daps_func._wrapped_func
 
     cdef void* callback_ptr = <void*>options['callback'] if options['callback'] is not None else NULL
 
@@ -279,13 +283,10 @@ def daps_minimize(func, bounds=None, options=None):
         'nit': res.nit,
         'success': res.success,
         'dimensions': dimensions,
-        'final_prime_idx_x': res.final_prime_idx_x
+        'final_prime_idx_x': res.final_prime_idx_x,
+        'final_prime_idx_y': res.final_prime_idx_y,
+        'final_prime_idx_z': res.final_prime_idx_z,
     }
-
-    if dimensions >= 2:
-        result['final_prime_idx_y'] = res.final_prime_idx_y
-    if dimensions == 3:
-        result['final_prime_idx_z'] = res.final_prime_idx_z
 
     # Add function info if available
     if hasattr(func, 'info') and callable(func.info):
