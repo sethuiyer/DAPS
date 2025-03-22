@@ -33,16 +33,16 @@ cdef extern from "daps.cpp":
         int max_iter,
         int min_prime_idx,
         int max_prime_idx,
-        function[bool(const vector[double]&, double, int)] callback,
+        function[bool(vector[double], double, int)] callback,
         double tol
     ) nogil
 
 # Type definitions for function pointers
 ctypedef double (*c_func_type)(double, double, double) nogil
-ctypedef bool (*callback_func_type)(const vector[double]&, double, int) nogil
+ctypedef bool (*callback_func_type)(vector[double], double, int) nogil
 
 # Wrapper for callback functions from Python to C++
-cdef bool python_callback_wrapper(const vector[double]& x, double fun_val, int evals, object py_callback) with gil:
+cdef bool python_callback_wrapper(vector[double]& x, double fun_val, int evals, object py_callback) with gil:
     """Wrapper to call Python callback from C++"""
     try:
         # Call Python callback with result dict
@@ -69,7 +69,7 @@ cdef callback_func_type create_callback_wrapper(object py_callback):
     
     # Create wrapper that captures the callback_id
     cdef callback_func_type callback_wrapper = (
-        lambda const vector[double]& x, double fun_val, int evals:
+        lambda vector[double] x, double fun_val, int evals:
         python_callback_wrapper(x, fun_val, evals, _callback_registry[callback_id])
     )
     
