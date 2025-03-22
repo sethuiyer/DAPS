@@ -53,29 +53,6 @@ cdef extern from "daps.cpp":
         int dimensions
     ) nogil
 
-# -------------------------------------------------------------
-# Extern-C wrapper to match C linkage for call_python_callback
-# -------------------------------------------------------------
-    cdef public extern "C" bint call_python_callback(
-    const vector[double]& x,
-    double fun_val,
-    int evals,
-    void* ptr
-    ) with gil:
-        cdef long cid = <long>ptr
-        cdef bint keep_going = True
-        try:
-            pyf = _callback_registry.get(cid)
-            if pyf is None:
-                return keep_going
-            x_list = [x[i] for i in range(x.size())]
-            py_res = pyf(x_list, fun_val, evals)
-            if py_res is not None:
-                keep_going = <bint>PyObject_IsTrue(py_res)
-        except:
-            keep_going = True
-        return keep_going
-
 
 # Cython-implemented callback (with gil)
 cdef cpp_bool _cy_call_python_callback(const vector[double]& x, double fun_val, int evals, void* ptr) with gil:
