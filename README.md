@@ -18,16 +18,6 @@ DAPS (Dimensionally Adaptive Prime Search) is a novel optimization algorithm des
 - **SciPy Compatible**: Similar interface to SciPy's optimization functions
 - **Interactive Demo**: Visualize the optimization process using the Streamlit app
 
-## Interactive Demo
-
-Try the algorithm in action with our interactive demo:
-
-![DAPS Interactive Demo](docs/assets/daps_demo_screenshot.png)
-
-### Online Demo
-
-The demo is available online at [https://daps-demo.streamlit.app](https://daps-demo.streamlit.app)
-
 ### Run Locally
 
 ```bash
@@ -301,7 +291,7 @@ MIT License - See LICENSE file for details.
 If you use DAPS in your research or projects, please consider citing:
 
 ```bibtex
-@article{iyer2025prime,
+@article{iyerpreprintprime,
   title={Prime-Adaptive Search (PAS): A Novel Method for Efficient Optimization in Discontinuous Landscapes},
   author={Iyer, Sethu},
   year={2025},

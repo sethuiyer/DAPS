@@ -1,7 +1,5 @@
-"""
-DAPS Core implementation.
+# daps/core/__init__.py
+# This file makes daps/core a package.
 
-This package contains the core implementation of the DAPS algorithm.
-"""
-
-# The _daps module will be imported at runtime after being built by setup.py
+from ._daps import daps_minimize
+from .function import DAPSFunction, recursive_fractal_cliff_valley, rosenbrock_3d, sphere_func, ackley_3d, rastrigin
