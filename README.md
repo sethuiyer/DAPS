@@ -1,5 +1,8 @@
 # DAPS - Dimensionally Adaptive Prime Search
 
+![img](LOGO.webp)
+
+
 A high-performance global optimization algorithm for 1D, 2D, and 3D functions, implemented in C++ with Python bindings via Cython.
 
 ## Overview
