@@ -1,0 +1,94 @@
+\ProvidesPackage{arxiv}
+
+% use the hyperref package for hyperlinks
+\RequirePackage{hyperref}
+\hypersetup{
+    colorlinks,
+    citecolor=blue,
+    filecolor=blue,
+    linkcolor=blue,
+    urlcolor=blue,
+}
+
+% Fonts and language
+\RequirePackage[english]{babel}
+\RequirePackage{times}
+\RequirePackage{microtype}
+
+% Set page layout parameters
+\setlength{\paperwidth}{8.5in}
+\setlength{\paperheight}{11in}
+\setlength{\textwidth}{6.5in}
+\setlength{\columnsep}{0.25in}
+\setlength{\textheight}{9in}
+\setlength{\topmargin}{-0.5in}
+\setlength{\headheight}{0.15in}
+\setlength{\headsep}{0.25in}
+\setlength{\footskip}{0.5in}
+\setlength{\oddsidemargin}{0in}
+\setlength{\evensidemargin}{0in}
+
+% Title formatting
+\renewcommand{\title}[1]{\def\@title{#1}}
+\renewcommand{\author}[1]{\def\@author{#1}}
+\renewcommand{\@maketitle}{
+    \begin{center}
+        {\LARGE\bf \@title}
+        \vskip 0.3in
+        \@author
+    \end{center}
+}
+
+% Section formatting
+\renewcommand{\section}{\@startsection{section}{1}{0pt}{-2.0ex plus -0.5ex minus -0.2ex}{1.5ex plus 0.3ex minus 0.2ex}{\large\bf}}
+\renewcommand{\subsection}{\@startsection{subsection}{2}{0pt}{-1.8ex plus -0.5ex minus -0.2ex}{0.8ex plus 0.2ex}{\normalsize\bf}}
+\renewcommand{\subsubsection}{\@startsection{subsubsection}{3}{0pt}{-1.5ex plus -0.5ex minus -0.2ex}{0.5ex plus 0.2ex}{\normalsize\bf}}
+\renewcommand{\paragraph}{\@startsection{paragraph}{4}{0pt}{1.5ex plus 0.5ex minus 0.2ex}{-1em}{\normalsize\bf}}
+\renewcommand{\subparagraph}{\@startsection{subparagraph}{5}{0pt}{1.5ex plus 0.5ex minus 0.2ex}{-1em}{\normalsize\bf}}
+
+% Float placement
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.7}
+\renewcommand{\dbltopfraction}{0.9}
+\renewcommand{\dblfloatpagefraction}{0.7}
+
+% Caption formatting
+\long\def\@makecaption#1#2{
+    \vskip 0.8ex
+    \setbox\@tempboxa\hbox{\small\bf #1: \small #2}
+    \ifdim \wd\@tempboxa >\hsize
+        \small\bf #1: \small #2\par
+    \else
+        \hbox to\hsize{\hfil\box\@tempboxa\hfil}
+    \fi
+}
+
+% Bibliography formatting
+\renewenvironment{thebibliography}[1]{
+    \section*{References}
+    \list{\@biblabel{\@arabic\c@enumiv}}
+         {\settowidth\labelwidth{\@biblabel{#1}}
+          \leftmargin\labelwidth
+          \advance\leftmargin\labelsep
+          \usecounter{enumiv}
+          \let\p@enumiv\@empty
+          \renewcommand\theenumiv{\@arabic\c@enumiv}}
+    \sloppy\clubpenalty4000\widowpenalty4000
+    \sfcode`\.\@m
+}{
+    \def\@noitemerr
+       {\@latex@warning{Empty `thebibliography' environment}}
+    \endlist
+}
+
+% Define abstract environment
+\renewenvironment{abstract}{
+    \centerline{\bf Abstract}
+    \vspace{0.5ex}
+    \begin{quote}
+}{
+    \end{quote}
+    \vspace{1ex}
+} 

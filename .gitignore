@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# LaTeX
+paper/build/
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+paper/venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Documentation
+site/
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Cython generated files
+daps/core/_daps.c
+daps/core/_daps.cpp
+
+# C extensions
+*.c
+*.cpp.c
+
+# Distribution / packaging
+*.egg-info/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Matplotlib generated figures
+*.png 

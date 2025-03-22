@@ -1,0 +1,15 @@
+# Core dependencies for building the DAPS package
+cython>=0.29.24  # Required to build the DAPS module
+
+# Core dependencies for generating paper figures
+numpy>=1.20.0
+matplotlib>=3.5.0
+scipy>=1.7.0
+seaborn>=0.11.0
+pandas>=1.3.0
+
+# Optional dependencies for integrating with DAPS package
+pydantic>=1.8.0  # For DAPS function validation
+
+# For running tests or additional analysis
+pytest>=6.0.0  # Optional, for testing

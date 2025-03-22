@@ -1,0 +1,6 @@
+numpy>=1.19.0
+cython>=0.29.24
+pydantic>=1.8.0
+matplotlib>=3.4.0
+scipy>=1.7.0  # For benchmarking
+pytest>=6.0.0  # For testing 

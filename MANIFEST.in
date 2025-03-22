@@ -1,0 +1,36 @@
+# Include the README file
+include README.md
+
+# Include the license file
+include LICENSE
+
+# Include the requirements file
+include requirements.txt
+
+# Include citation file
+include CITATION.cff
+
+# Include C++ source files
+include daps/core/daps.cpp
+
+# Include all Python files
+recursive-include daps *.py
+recursive-include tests *.py
+recursive-include examples *.py
+
+# Include paper files
+recursive-include paper *.tex *.sty *.py Makefile README.md requirements.txt
+recursive-include paper/figures *.png
+
+# Include examples
+recursive-include examples *.py *.md
+
+# Exclude build artifacts
+recursive-exclude * __pycache__
+recursive-exclude * *.py[cod]
+recursive-exclude * *.so
+recursive-exclude * *.dylib
+recursive-exclude * *.c
+recursive-exclude * *.egg-info
+recursive-exclude * *.egg
+recursive-exclude paper/build * 

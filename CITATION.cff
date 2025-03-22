@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+title: "DAPS: Dimensionally Adaptive Prime Search Optimizer"
+authors:
+  - family-names: "Iyer"
+    given-names: "Sethu"
+    orcid: "https://orcid.org/0000-0000-0000-0000"  # Replace with actual ORCID if available
+repository-code: "https://github.com/sethuiyer/DAPS"
+abstract: "A high-performance global optimization algorithm for 3D functions, implemented in C++ with Python bindings via Cython."
+keywords:
+  - optimization
+  - global-optimization
+  - 3d-optimization
+  - cython
+  - c++
+license: MIT
+version: 0.1.0
+date-released: "2023-01-01"  # Replace with actual release date
+type: software
+preferred-citation:
+  type: software
+  authors:
+    - family-names: "Iyer"
+      given-names: "Sethu"
+      orcid: "https://orcid.org/0000-0000-0000-0000"  # Replace with actual ORCID if available
+  title: "DAPS: Dimensionally Adaptive Prime Search Optimizer"
+  year: 2023
+  repository-code: "https://github.com/sethuiyer/DAPS"
+  abstract: "DAPS (Dimensionally Adaptive Prime Search) is a novel optimization algorithm designed for efficiently finding global minima of complex 3D functions. It utilizes a unique prime number-based grid search strategy with adaptive refinement to navigate complex objective function landscapes with multiple local minima, valleys, and cliffs."
+  license: MIT
+  version: 0.1.0 
