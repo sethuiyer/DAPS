@@ -5,6 +5,15 @@ import numpy as np
 import os
 import platform
 
+# Make sure numpy is installed before setup runs
+# This ensures correct handling of include directories
+try:
+    import numpy
+except ImportError:
+    raise ImportError(
+        "NumPy is required for building DAPS. Please install NumPy before installing DAPS."
+    )
+
 # Define the extensions
 extensions = [
     Extension(
@@ -39,7 +48,10 @@ setup(
         "Intended Audience :: Science/Research",
     ],
     python_requires=">=3.6",
-    install_requires=["numpy>=1.19.0"],
+    install_requires=[
+        "numpy>=1.19.0", 
+        "pydantic>=1.8.0"
+    ],
     ext_modules=cythonize(extensions, 
                          compiler_directives={
                              "language_level": 3,

@@ -23,7 +23,8 @@ struct DAPSResult {
 };
 
 // External Python callback function declaration
-extern "C" bool call_python_callback(const std::vector<double>& x, double fun_val, int evals, void* py_callback_ptr);
+// This should match the definition in _daps.pyx
+extern bool call_python_callback(const std::vector<double>& x, double fun_val, int evals, void* py_callback_ptr);
 
 
 // Simple prime number generator (for small primes)

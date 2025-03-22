@@ -7,7 +7,7 @@ import numpy as np
 cimport numpy as np
 from libcpp.vector cimport vector
 from libcpp.functional cimport function
-from libcpp cimport bool # Use standard bool from libcpp
+from libcpp cimport bool
 
 from .function import DAPSFunction, recursive_fractal_cliff_valley_func, rosenbrock_3d_func, sphere_func, ackley_3d_func, rastrigin_func
 
@@ -25,15 +25,15 @@ cdef extern from "daps.cpp":
         double fun_val
         int nfev
         int nit
-        bool success  # Use standard C++ bool
+        bool success
         int final_prime_idx_x
         int final_prime_idx_y
         int final_prime_idx_z
         int dimensions
 
-    # DAPS Optimization function declaration.  VERY IMPORTANT: use correct function pointer type!
+    # DAPS Optimization function declaration
     DAPSResult daps_optimize(
-        objective_func_ptr func,  # Use the typedef-ed function pointer type
+        objective_func_ptr func,
         double x_min, double x_max,
         double y_min, double y_max,
         double z_min, double z_max,
@@ -46,109 +46,68 @@ cdef extern from "daps.cpp":
         int dimensions
     ) nogil
 
-    # Built-in test functions (now declared correctly)
+    # Built-in test functions
     double recursive_fractal_cliff_valley(double x, double y, double z) nogil
     double rosenbrock_3d(double x, double y, double z) nogil
     double sphere_function(double x, double y, double z) nogil
     double ackley_function(double x, double y, double z) nogil
     double rastrigin_function(double x, double y, double z) nogil
 
+# Store user defined functions to prevent garbage collection
+cdef dict _user_functions = {}
 
-# -------------------------------------------------------------
-# Cython callback function (with GIL)
-# -------------------------------------------------------------
-cdef extern from *:  # Use extern "C" to avoid name mangling
+# C function that will be called by Python - allows Python callback to be called from C++
+# Export this function using extern "C" to prevent name mangling
+cdef extern "C" bool call_python_callback(const vector[double]& x, double fun_val, int evals, void* py_callback_ptr) with gil:
     """
-    #include <Python.h>
-    int call_python_callback(const std::vector<double>& x, double fun_val, int evals, void* py_callback_ptr) {
-        if (py_callback_ptr == NULL) {
-            return 1; // Continue if no callback
-        }
-
-        PyGILState_STATE gstate;
-        gstate = PyGILState_Ensure();
-
-        PyObject* pFunc = (PyObject*)py_callback_ptr;
-        if (!PyCallable_Check(pFunc)) {
-            PyGILState_Release(gstate);
-            return 0; // Stop if the callback is not callable.
-        }
-
-        PyObject* pArgs = PyTuple_New(3);
-        PyObject* pXList = PyList_New(x.size());
-        for (size_t i = 0; i < x.size(); ++i) {
-            PyList_SET_ITEM(pXList, i, PyFloat_FromDouble(x[i]));  // Steals reference
-        }
+    Callback bridge function to allow C++ to call into Python
+    """
+    if py_callback_ptr != NULL:
+        # Cast void pointer back to Python object pointer
+        callback = <object>py_callback_ptr
         
-        PyTuple_SET_ITEM(pArgs, 0, pXList); // Steals reference
-        PyTuple_SET_ITEM(pArgs, 1, PyFloat_FromDouble(fun_val));   // Steals reference
-        PyTuple_SET_ITEM(pArgs, 2, PyLong_FromLong(evals));  // Steals reference
+        # Convert vector to numpy array
+        x_array = np.asarray([x[i] for i in range(x.size())])
+        
+        # Call the Python callback
+        try:
+            result = callback(x_array, fun_val, evals)
+            if result is not None:
+                return result
+            return True
+        except Exception as e:
+            print(f"Error in Python callback: {e}")
+            return False
+    return True
 
-        PyObject* pResult = PyObject_CallObject(pFunc, pArgs);
-        Py_DECREF(pArgs); // pArgs, pXList, and item in it no longer needed
+# Wrapper functions for built-in test functions
+def py_recursive_fractal_cliff_valley(double x, double y, double z):
+    return recursive_fractal_cliff_valley(x, y, z)
 
-        int keep_going = 1;  // Default to continue
-        if (pResult != NULL) {
-            if (PyObject_IsTrue(pResult)) {
-                keep_going = 1; // Continue
-            } else {
-                keep_going = 0; // Stop
-            }
-            Py_DECREF(pResult);
-        } else {
-            PyErr_Print();  // Print any errors from the Python callback
-            keep_going = 0; // Stop on error
-        }
-        PyGILState_Release(gstate);
-        return keep_going;
-    }
+def py_rosenbrock_3d(double x, double y, double z):
+    return rosenbrock_3d(x, y, z)
+
+def py_sphere_function(double x, double y, double z):
+    return sphere_function(x, y, z)
+
+def py_ackley_function(double x, double y, double z):
+    return ackley_function(x, y, z)
+
+def py_rastrigin_function(double x, double y, double z):
+    return rastrigin_function(x, y, z)
+
+# Main optimization function wrapper
+def daps_optimize_wrapper(func, bounds, options=None):
     """
-    int call_python_callback(const vector[double]& x, double fun_val, int evals, void* py_callback_ptr)
-
-
-# -------------------------------------------------------------
-# Main optimization interface (Cython)
-# -------------------------------------------------------------
-
-def daps_minimize(func, bounds=None, options=None):
-    """
-    Minimizes a function using the DAPS algorithm, supporting 1D, 2D, and 3D optimization.
-
+    Python wrapper for the C++ DAPS optimizer
+    
     Args:
-        func: The objective function to minimize. Can be:
-            - A DAPSFunction instance
-            - A function with signature:
-               * f(x) -> float (1D)
-               * f(x, y) -> float (2D)
-               * f(x, y, z) -> float (3D)
-            - A function with signature f(coords) -> float where coords is a numpy array
-        bounds: Bounds for the variables, specified as:
-            - [xmin, xmax] for 1D
-            - [xmin, xmax, ymin, ymax] for 2D
-            - [xmin, xmax, ymin, ymax, zmin, zmax] for 3D
-            If None and fun is a DAPSFunction with defined bounds, those bounds will be used.
-        options: A dictionary of options:
-            'max_iterations': Maximum number of iterations (default: 1000).
-            'min_prime_idx_x': Minimum prime index for x dimension (default: 0).
-            'min_prime_idx_y': Minimum prime index for y dimension (default: 0).
-            'min_prime_idx_z': Minimum prime index for z dimension (default: 0).
-            'callback': Callback function (called each iteration).
-            'tol': Tolerance for termination (default: 1e-8).
-            'verbose': Whether to print progress information (default: False).
-            'dimensions': Number of dimensions (1, 2, or 3). If not specified,
-                          inferred from bounds length.
-
+        func: Function to optimize
+        bounds: [xmin, xmax, ymin, ymax, zmin, zmax] bounds
+        options: Dictionary of optimizer options
+        
     Returns:
-        A dictionary containing the optimization results:
-            'x': NumPy array of best solution found (length depends on dimensions).
-            'fun': Best function value found.
-            'nfev': Number of function evaluations.
-            'nit': Number of iterations performed.
-            'success': Boolean indicating success.
-            'dimensions': Number of dimensions used for optimization.
-            'final_prime_idx_x': Final prime index for x dimension.
-            'final_prime_idx_y': Final prime index for y dimension (if dimensions >= 2).
-            'final_prime_idx_z': Final prime index for z dimension (if dimensions >= 3).
+        Dictionary with optimization results
     """
     # Default options
     default_options = {
@@ -159,137 +118,108 @@ def daps_minimize(func, bounds=None, options=None):
         'callback': None,
         'tolerance': 1e-8,
         'verbose': False,
-        'dimensions': None
+        'dimensions': 3
     }
-
-    # Update defaults with user-provided options
+    
+    # Update with user options
     if options is not None:
         default_options.update(options)
-    options = default_options  # Use the merged options
-
-    # Process the function
-    if isinstance(func, DAPSFunction):
-        # If function is already a DAPSFunction instance, use it directly
-        daps_func = func
-        # Use the DAPSFunction's bounds if none provided
-        if bounds is None and daps_func.bounds is not None:
-            bounds = daps_func.bounds
-    else:
-        # Wrap the function in a DAPSFunction
-        try:
-            daps_func = DAPSFunction(func=func)
-        except Exception as e:
-            raise ValueError(f"Invalid function: {e}")
-
-    # Check bounds
-    if bounds is None:
-        raise ValueError("bounds must be specified either in the function call or in the DAPSFunction")
-
-    # Determine dimensions from bounds if not specified
-    dimensions = options['dimensions']
-    if dimensions is None:
-        # Auto-detect dimensions based on bounds length
-        if len(bounds) == 2:
-            dimensions = 1
-        elif len(bounds) == 4:
-            dimensions = 2
-        elif len(bounds) == 6:
-            dimensions = 3
-        else:
-            raise ValueError("bounds must contain 2 values (1D), 4 values (2D), or 6 values (3D)")
-        options['dimensions'] = dimensions
-    else:
-        # Validate dimensions
-        if dimensions not in (1, 2, 3):
-            raise ValueError("dimensions must be 1, 2, or 3")
-
-        # Validate bounds length
-        if len(bounds) != dimensions * 2:
-            raise ValueError(f"For {dimensions}D optimization, bounds must contain {dimensions*2} values")
-
-    # Input validation (options)
-    for key, value in options.items():
-        if key not in default_options:
-            raise ValueError(f"Invalid option: {key}")
-        if key in ('max_iterations', 'min_prime_idx_x', 'min_prime_idx_y', 'min_prime_idx_z'):
-            if not isinstance(value, int) or value < 0:
-                raise ValueError(f"{key} must be a non-negative integer")
-        if key == 'callback' and value is not None and not callable(value):
-            raise ValueError("callback must be a callable function")
-        if key == "tolerance" and value is not None and not isinstance(value, (int, float)):
-            raise ValueError("tolerance must be a numeric value")
-
-    # Prepare arguments for the C++ function
+    
+    # Extract options
+    cdef int max_iter = default_options['max_iterations']
+    cdef int min_prime_idx_x = default_options['min_prime_idx_x']
+    cdef int min_prime_idx_y = default_options['min_prime_idx_y']
+    cdef int min_prime_idx_z = default_options['min_prime_idx_z']
+    cdef double tol = default_options['tolerance']
+    cdef int dimensions = default_options['dimensions']
+    cdef void* callback_ptr = NULL
+    
+    # Get callback if provided
+    callback = default_options['callback']
+    if callback is not None:
+        callback_ptr = <void*>callback
+    
+    # Validate dimensions
+    if dimensions < 1 or dimensions > 3:
+        raise ValueError("Dimensions must be 1, 2, or 3")
+    
+    # Validate bounds based on dimensions
+    if dimensions == 1 and len(bounds) < 2:
+        raise ValueError("For 1D optimization, bounds must be [xmin, xmax]")
+    elif dimensions == 2 and len(bounds) < 4:
+        raise ValueError("For 2D optimization, bounds must be [xmin, xmax, ymin, ymax]")
+    elif dimensions == 3 and len(bounds) < 6:
+        raise ValueError("For 3D optimization, bounds must be [xmin, xmax, ymin, ymax, zmin, zmax]")
+    
+    # Extract bounds
     cdef double x_min = bounds[0]
     cdef double x_max = bounds[1]
     cdef double y_min = 0.0
     cdef double y_max = 0.0
     cdef double z_min = 0.0
     cdef double z_max = 0.0
-
+    
     if dimensions >= 2:
         y_min = bounds[2]
         y_max = bounds[3]
-    if dimensions == 3:
+        
+    if dimensions >= 3:
         z_min = bounds[4]
         z_max = bounds[5]
-
-    cdef objective_func_ptr cpp_func
-
-    if func is recursive_fractal_cliff_valley_func:
-        cpp_func = recursive_fractal_cliff_valley
-    elif func is rosenbrock_3d_func:
-        cpp_func = rosenbrock_3d
-    elif func is sphere_func:
-        cpp_func = sphere_function
-    elif func is ackley_3d_func:
-        cpp_func = ackley_function
-    elif func is rastrigin_func:
-        cpp_func = rastrigin_function
-    # NEW: Use the DAPSFunction wrapper for other functions
+    
+    # Determine the actual objective function to use
+    cdef DAPSResult result
+    
+    # Special handling for built-in functions
+    if func is recursive_fractal_cliff_valley_func or func is py_recursive_fractal_cliff_valley:
+        result = daps_optimize(&recursive_fractal_cliff_valley, 
+                              x_min, x_max, y_min, y_max, z_min, z_max,
+                              max_iter, min_prime_idx_x, min_prime_idx_y, min_prime_idx_z,
+                              callback_ptr, tol, dimensions)
+    elif func is rosenbrock_3d_func or func is py_rosenbrock_3d:
+        result = daps_optimize(&rosenbrock_3d, 
+                              x_min, x_max, y_min, y_max, z_min, z_max,
+                              max_iter, min_prime_idx_x, min_prime_idx_y, min_prime_idx_z,
+                              callback_ptr, tol, dimensions)
+    elif func is sphere_func or func is py_sphere_function:
+        result = daps_optimize(&sphere_function, 
+                              x_min, x_max, y_min, y_max, z_min, z_max,
+                              max_iter, min_prime_idx_x, min_prime_idx_y, min_prime_idx_z,
+                              callback_ptr, tol, dimensions)
+    elif func is ackley_3d_func or func is py_ackley_function:
+        result = daps_optimize(&ackley_function, 
+                              x_min, x_max, y_min, y_max, z_min, z_max,
+                              max_iter, min_prime_idx_x, min_prime_idx_y, min_prime_idx_z,
+                              callback_ptr, tol, dimensions)
+    elif func is rastrigin_func or func is py_rastrigin_function:
+        result = daps_optimize(&rastrigin_function, 
+                              x_min, x_max, y_min, y_max, z_min, z_max,
+                              max_iter, min_prime_idx_x, min_prime_idx_y, min_prime_idx_z,
+                              callback_ptr, tol, dimensions)
     else:
-      if dimensions == 1:
-          cpp_func = daps_func._wrapped_func
-      elif dimensions == 2:
-          cpp_func = daps_func._wrapped_func
-      else: # dimensions == 3
-          cpp_func = daps_func._wrapped_func
-
-    cdef void* callback_ptr = <void*>options['callback'] if options['callback'] is not None else NULL
-
-    # Call the C++ optimization function
-    cdef DAPSResult res = daps_optimize(
-        cpp_func,
-        x_min, x_max,
-        y_min, y_max,
-        z_min, z_max,
-        options['max_iterations'],
-        options['min_prime_idx_x'],
-        options['min_prime_idx_y'],
-        options['min_prime_idx_z'],
-        callback_ptr,
-        options['tolerance'],
-        dimensions
-    )
-
-    # Convert C++ vector to NumPy array
-    result_x = np.array(res.x)
-
-    # Return results as a dictionary
-    result = {
-        'x': result_x,
-        'fun': res.fun_val,
-        'nfev': res.nfev,
-        'nit': res.nit,
-        'success': res.success,
-        'dimensions': dimensions,
-        'final_prime_idx_x': res.final_prime_idx_x,
-        'final_prime_idx_y': res.final_prime_idx_y,
-        'final_prime_idx_z': res.final_prime_idx_z,
+        # For user-defined functions, store the function and use a proxy
+        _user_functions['current_func'] = func
+        
+        # TODO: Implement user-defined function handling
+        raise NotImplementedError("User-defined functions are not yet implemented")
+    
+    # Create return dictionary
+    x_result = [result.x[i] for i in range(dimensions)]
+    
+    return_dict = {
+        'x': np.array(x_result),
+        'fun': result.fun_val,
+        'nfev': result.nfev,
+        'nit': result.nit,
+        'success': result.success,
+        'dimensions': result.dimensions,
+        'final_prime_idx_x': result.final_prime_idx_x,
     }
-
-    # Add function info if available
-    if hasattr(func, 'info') and callable(func.info):
-        result['function_info'] = func.info()
-
-    return result
+    
+    if dimensions >= 2:
+        return_dict['final_prime_idx_y'] = result.final_prime_idx_y
+        
+    if dimensions >= 3:
+        return_dict['final_prime_idx_z'] = result.final_prime_idx_z
+    
+    return return_dict
