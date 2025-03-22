@@ -1,5 +1,5 @@
 # Core dependencies for building the DAPS package
-cython>=0.29.24  # Required to build the DAPS module
+Cython
 
 # Core dependencies for generating paper figures
 numpy>=1.20.0
