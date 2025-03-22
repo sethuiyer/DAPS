@@ -1,13 +1,14 @@
 # DAPS - Dimensionally Adaptive Prime Search
 
-A high-performance global optimization algorithm for 3D functions, implemented in C++ with Python bindings via Cython.
+A high-performance global optimization algorithm for 1D, 2D, and 3D functions, implemented in C++ with Python bindings via Cython.
 
 ## Overview
 
-DAPS (Dimensionally Adaptive Prime Search) is a novel optimization algorithm designed for efficiently finding global minima of complex 3D functions. It utilizes a unique prime number-based grid search strategy with adaptive refinement to navigate complex objective function landscapes with multiple local minima, valleys, and cliffs.
+DAPS (Dimensionally Adaptive Prime Search) is a novel optimization algorithm designed for efficiently finding global minima of complex functions in 1D, 2D, and 3D spaces. It utilizes a unique prime number-based grid search strategy with adaptive refinement to navigate complex objective function landscapes with multiple local minima, valleys, and cliffs.
 
 ### Key Features
 
+- **Multi-Dimensional Support**: Optimize functions in 1D, 2D, or 3D spaces
 - **High Performance**: C++ core with Cython bindings for speed
 - **Global Optimization**: Designed to escape local minima and find global optima
 - **Advanced Adaptivity**: Dynamically adjusts search resolution in each dimension
@@ -93,16 +94,30 @@ This will compile the C++ code with Cython and install the package in developmen
 ```python
 from daps import daps_minimize
 
-# Optimize a built-in test function
-result = daps_minimize(
-    'recursive_fractal_cliff_valley',
-    bounds=[-5, 5, -5, 5, -5, 5],
-    options={'maxiter': 100}
+# 1D Optimization Example
+result_1d = daps_minimize(
+    'sphere_function',
+    bounds=[-5, 5],  # 1D bounds: [x_min, x_max]
+    options={'dimensions': 1, 'maxiter': 50}
 )
 
-print(f"Best solution: {result['x']}")
-print(f"Function value: {result['fun']}")
-print(f"Function evaluations: {result['nfev']}")
+# 2D Optimization Example
+result_2d = daps_minimize(
+    'recursive_fractal_cliff_valley',
+    bounds=[-5, 5, -5, 5],  # 2D bounds: [x_min, x_max, y_min, y_max]
+    options={'dimensions': 2, 'maxiter': 80}
+)
+
+# 3D Optimization Example
+result_3d = daps_minimize(
+    'recursive_fractal_cliff_valley',
+    bounds=[-5, 5, -5, 5, -5, 5],  # 3D bounds: [x_min, x_max, y_min, y_max, z_min, z_max]
+    options={'dimensions': 3, 'maxiter': 100}
+)
+
+print(f"1D Best solution: {result_1d['x']}, value: {result_1d['fun']}")
+print(f"2D Best solution: {result_2d['x']}, value: {result_2d['fun']}")
+print(f"3D Best solution: {result_3d['x']}, value: {result_3d['fun']}")
 ```
 
 ### Optimizing a Custom Function
@@ -111,21 +126,52 @@ print(f"Function evaluations: {result['nfev']}")
 from daps import daps_minimize, DAPSFunction
 import numpy as np
 
+# Define a custom 1D function
+def parabola_1d(x):
+    return (x - 2)**2
+
+# Define a custom 2D function
+def himmelblau_2d(x, y):
+    return (x**2 + y - 11)**2 + (x + y**2 - 7)**2
+
 # Define a custom 3D function
 def my_function(x, y, z):
     return np.sin(x*y) + np.cos(y*z) + x**2 + y**2 + z**2
 
-# Create a DAPSFunction instance with metadata
-my_func = DAPSFunction(
+# Create DAPSFunction instances with metadata
+parabola = DAPSFunction(
+    func=parabola_1d,
+    name="Parabola 1D",
+    bounds=[-10, 10],
+    dimensions=1,
+    true_optimum=[2.0],
+    true_value=0.0,
+    description="Simple 1D parabola with minimum at x=2"
+)
+
+himmelblau = DAPSFunction(
+    func=himmelblau_2d,
+    name="Himmelblau 2D",
+    bounds=[-5, 5, -5, 5],
+    dimensions=2,
+    true_optimum=[[3.0, 2.0], [-2.805118, 3.131312], [-3.779310, -3.283186], [3.584428, -1.848126]],
+    true_value=0.0,
+    description="Himmelblau function with four identical local minima"
+)
+
+custom_3d = DAPSFunction(
     func=my_function,
-    name="Custom Function",
+    name="Custom 3D Function",
     bounds=[-5, 5, -5, 5, -5, 5],
+    dimensions=3,
     description="A custom 3D function with multiple local minima"
 )
 
-# Optimize the function
-result = daps_minimize(
-    my_func,
+# Optimize the functions
+result_1d = daps_minimize(parabola, options={'maxiter': 50})
+result_2d = daps_minimize(himmelblau, options={'maxiter': 80})
+result_3d = daps_minimize(
+    custom_3d,
     options={
         'maxiter': 200,
         'min_prime_idx': 5,
@@ -135,8 +181,9 @@ result = daps_minimize(
 )
 
 # Process the results
-print(f"Optimal point: ({result['x'][0]:.4f}, {result['x'][1]:.4f}, {result['x'][2]:.4f})")
-print(f"Optimal value: {result['fun']:.6f}")
+print(f"1D Optimal point: {result_1d['x'][0]:.4f}")
+print(f"2D Optimal point: ({result_2d['x'][0]:.4f}, {result_2d['x'][1]:.4f})")
+print(f"3D Optimal point: ({result_3d['x'][0]:.4f}, {result_3d['x'][1]:.4f}, {result_3d['x'][2]:.4f})")
 ```
 
 ## Documentation
@@ -200,8 +247,12 @@ Main optimization function with a SciPy-like interface.
 
 **Parameters:**
 - `func`: Function to minimize (callable, string name of built-in function, or DAPSFunction instance)
-- `bounds`: Bounds for variables [x_min, x_max, y_min, y_max, z_min, z_max]
+- `bounds`: Bounds for variables, with length depending on dimensions:
+  - 1D: [x_min, x_max]
+  - 2D: [x_min, x_max, y_min, y_max]
+  - 3D: [x_min, x_max, y_min, y_max, z_min, z_max]
 - `options`: Dictionary of options:
+  - `dimensions`: Number of dimensions (1, 2, or 3). Auto-detected from bounds if not specified.
   - `maxiter`: Maximum number of iterations (default: 1000)
   - `min_prime_idx`: Minimum prime index (default: 5)
   - `max_prime_idx`: Maximum prime index (default: 20)
@@ -210,11 +261,12 @@ Main optimization function with a SciPy-like interface.
 
 **Returns:**
 - Dictionary containing:
-  - `x`: Array of optimal values [x, y, z]
+  - `x`: Array of optimal values (length depends on dimensions)
   - `fun`: Function value at optimum
   - `nfev`: Number of function evaluations
   - `nit`: Number of iterations
   - `success`: Whether optimization succeeded
+  - `dimensions`: Number of dimensions used for optimization
   - `final_prime_indices`: Final prime indices used
 
 ### `DAPSFunction`
@@ -222,17 +274,20 @@ Main optimization function with a SciPy-like interface.
 Class for defining functions with metadata for optimization.
 
 **Parameters:**
-- `func`: The function to optimize (must accept three arguments: x, y, z)
+- `func`: The function to optimize (must accept arguments based on dimensions)
 - `name`: Name of the function
-- `bounds`: List of bounds [x_min, x_max, y_min, y_max, z_min, z_max]
-- `true_optimum`: Known optimal point (if available)
+- `bounds`: List of bounds, length depends on dimensions
+- `dimensions`: Number of dimensions (1, 2, or 3)
+- `true_optimum`: Known optimal point(s) (if available)
 - `true_value`: Known optimal value (if available)
 - `description`: Description of the function
 
 ## Built-in Test Functions
 
+All built-in test functions can be used in 1D, 2D, or 3D modes:
+
 - **Recursive Fractal Cliff Valley**: A challenging function with fractal-like structure
-- **Rosenbrock 3D**: Classic banana-shaped valley test function
+- **Rosenbrock**: Classic banana-shaped valley test function
 - **Sphere Function**: Simple convex function
 - **Ackley Function**: Highly non-convex function with many local minima
 - **Rastrigin Function**: Highly multimodal function with many regular local minima
