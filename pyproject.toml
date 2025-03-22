@@ -2,8 +2,42 @@
 requires = [
     "setuptools>=42",
     "wheel",
-    "Cython",
-    "numpy"
+    "Cython>=0.29.24",
+    "numpy>=1.19.0",
 ]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "daps"
+version = "0.1.0"
+description = "Dimensionally Adaptive Prime Search: A high-performance global optimization algorithm"
+readme = "README.md"
+authors = [
+    {name = "Sethu Iyer", email = "sethumiyer@gmail.com"},
+]
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Intended Audience :: Science/Research",
+]
+requires-python = ">=3.6"
+dependencies = [
+    "numpy>=1.19.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/sethuiyer/DAPS"
+"Bug Tracker" = "https://github.com/sethuiyer/DAPS/issues"
+"Documentation" = "https://github.com/sethuiyer/DAPS"
+
+[tool.cython-build]
+annotate = true
+language_level = "3"
+
+[tool.setuptools]
+packages = ["daps", "daps.core"]
 
