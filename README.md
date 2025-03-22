@@ -18,6 +18,10 @@ DAPS (Dimensionally Adaptive Prime Search) is a novel optimization algorithm des
 - **SciPy Compatible**: Similar interface to SciPy's optimization functions
 - **Interactive Demo**: Visualize the optimization process using the Streamlit app
 
+## Pythonic Implementation
+
+Python implementation can be found in `base.py`
+
 ### Run Locally
 
 ```bash
