@@ -1,0 +1,23 @@
+[theme]
+primaryColor = "#4B0082"  # Indigo
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F8F9FA"
+textColor = "#262730"
+font = "sans serif"
+
+[server]
+enableCORS = true
+enableXsrfProtection = true
+maxUploadSize = 200
+
+[browser]
+serverAddress = "localhost"
+gatherUsageStats = false
+
+[deprecation]
+showPyplotGlobalUse = false
+
+[runner]
+magicEnabled = true
+installTracer = false
+fixMatplotlib = true 

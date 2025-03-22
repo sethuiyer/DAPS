@@ -1,0 +1,111 @@
+site_name: DAPS - Dimensionally Adaptive Prime Search
+site_url: https://github.com/sethuiyer/DAPS
+site_description: A high-performance optimization algorithm for 3D functions using a prime-based adaptive search strategy
+site_author: Sethu Iyer
+
+repo_name: DAPS
+repo_url: https://github.com/sethuiyer/DAPS
+
+theme:
+  name: material
+  palette:
+    primary: indigo
+    accent: indigo
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+    - navigation.footer
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/function-variant
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.arithmatex:
+      generic: true
+  - footnotes
+  - pymdownx.details
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - def_list
+  - tables
+  - attr_list
+  - md_in_html
+
+plugins:
+  - search
+  - social
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [daps]
+          selection:
+            docstring_style: numpy
+          rendering:
+            show_source: true
+            show_category_heading: true
+            show_if_no_docstring: false
+  - git-revision-date-localized:
+      enable_creation_date: true
+  - minify:
+      minify_html: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/sethuiyer
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/sethuiyer/
+  analytics:
+    provider: google
+    property: !ENV [GOOGLE_ANALYTICS_KEY, '']
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage:
+      - Getting Started: usage/getting-started.md
+      - Examples: usage/examples.md
+      - Interactive Demo: usage/interactive-demo.md
+      - Advanced Configuration: usage/advanced-config.md
+  - Interactive:
+      - Demo Overview: usage/interactive-demo.md
+      - Implementation Details: interactive/implementation.md
+      - Deployment Guide: interactive/deployment.md
+  - API Reference: api.md
+  - Benchmarks: benchmarks.md
+  - Visualizations: visualizations.md
+  - Research:
+      - Paper: paper.md
+      - Methodology: research/methodology.md
+      - Theoretical Analysis: research/theory.md
+  - Development:
+      - Contributing: contributing.md
+      - Changelog: changelog.md
+      - Roadmap: roadmap.md
+  - About:
+      - License: about/license.md
+      - Citation: about/citation.md
+      - Acknowledgements: about/acknowledgements.md 
