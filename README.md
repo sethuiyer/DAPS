@@ -4,6 +4,18 @@
 
 A high-performance global optimization algorithm for 1D, 2D, and 3D functions, implemented in C++ with Python bindings.
 
+## 🎧 DAPS Podcast Episode
+
+Listen to the introduction of **Dimensionally Adaptive Prime Search (DAPS)** — the story, the math, and the future:
+
+[▶️ Listen to the Podcast](https://github.com/sethuiyer/DAPS/raw/refs/heads/main/daps_podcast.mp3)
+
+<audio controls>
+  <source src="https://github.com/sethuiyer/DAPS/raw/refs/heads/main/daps_podcast.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+
+
 ## Overview
 
 DAPS efficiently finds global minima of complex functions using a prime number-based adaptive grid search strategy. It excels at navigating complex landscapes with multiple local minima, valleys, and discontinuities.
