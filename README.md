@@ -4,9 +4,19 @@
 
 A high-performance global optimization algorithm for 1D, 2D, and 3D functions, implemented in C++ with Python bindings.
 
+## How It Works
+
+DAPS uses prime number-based grid sampling to avoid aliasing problems common in regular grid search methods. It dynamically adapts resolution and shrinks the search domain around promising regions.
+It assumes a measurable loss function at every evaluation. Primes are treated as resolution knobs and can be increased or decreased depending on the degree of accuracy needed.
+
+For theoretical details, see the [research paper](paper/build/daps_paper.pdf).
+
+
 ## 🎧 DAPS Podcast Episode
 
-Listen to the introduction of **Dimensionally Adaptive Prime Search (DAPS)** — the story, the math, and the future:
+Listen to the introduction of **Dimensionally Adaptive Prime Search (DAPS)** — the story, the math, and the future: [Podcast](https://github.com/sethuiyer/DAPS/blob/main/daps_podcast.mp3)
+
+[Hacker News Thread](https://news.ycombinator.com/item?id=43451114)
 
 ## Overview
 
@@ -83,14 +93,6 @@ cd interactive
 # or
 run_demo.bat   # Windows
 ```
-
-
-
-## How It Works
-
-DAPS uses prime number-based grid sampling to avoid aliasing problems common in regular grid search methods. It dynamically adapts resolution and shrinks the search domain around promising regions.
-
-For theoretical details, see the [research paper](paper/build/daps_paper.pdf).
 
 Here’s a **PyTorch‑compatible DAPS optimizer** :
 
