@@ -14,7 +14,9 @@ For theoretical details, see the [research paper](paper/build/daps_paper.pdf).
 
 ## 🎧 DAPS Podcast Episode
 
-Listen to the introduction of **Dimensionally Adaptive Prime Search (DAPS)** — the story, the math, and the future:
+Listen to the introduction of **Dimensionally Adaptive Prime Search (DAPS)** — the story, the math, and the future: [Podcast](https://github.com/sethuiyer/DAPS/blob/main/daps_podcast.mp3)
+
+[Hacker News Thread](https://news.ycombinator.com/item?id=43451114)
 
 ## Overview
 
