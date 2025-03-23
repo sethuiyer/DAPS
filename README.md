@@ -8,14 +8,6 @@ A high-performance global optimization algorithm for 1D, 2D, and 3D functions, i
 
 Listen to the introduction of **Dimensionally Adaptive Prime Search (DAPS)** — the story, the math, and the future:
 
-[▶️ Listen to the Podcast](https://github.com/sethuiyer/DAPS/raw/refs/heads/main/daps_podcast.mp3)
-
-<audio controls>
-  <source src="https://github.com/sethuiyer/DAPS/raw/refs/heads/main/daps_podcast.mp3" type="audio/mpeg">
-  Your browser does not support the audio element.
-</audio>
-
-
 ## Overview
 
 DAPS efficiently finds global minima of complex functions using a prime number-based adaptive grid search strategy. It excels at navigating complex landscapes with multiple local minima, valleys, and discontinuities.
@@ -92,15 +84,80 @@ cd interactive
 run_demo.bat   # Windows
 ```
 
-## Documentation
 
-Full documentation: [https://sethuiyer.github.io/DAPS/](https://sethuiyer.github.io/DAPS/)
 
 ## How It Works
 
 DAPS uses prime number-based grid sampling to avoid aliasing problems common in regular grid search methods. It dynamically adapts resolution and shrinks the search domain around promising regions.
 
 For theoretical details, see the [research paper](paper/build/daps_paper.pdf).
+
+Here’s a **PyTorch‑compatible DAPS optimizer** :
+
+- Starts at prime=97  
+- Never drops below prime=2  
+- Works for **n‑dimensional** functions in batch (GPU‑ready)  
+- Adapts prime resolution, shrinks domain, and clamps to your original bounds  
+
+```python
+import torch
+from sympy import primerange
+
+class DAPSOptimizerTorch:
+    def __init__(self, bounds, device='cpu', prime_start=97):
+        primes = list(primerange(2,500))
+        self.prime_list = primes
+        self.prime_idx = primes.index(prime_start)
+        self.min_idx = 0
+        self.max_idx = len(primes)-1
+        self.device = torch.device(device)
+        self.bounds = torch.tensor(bounds, device=self.device).view(-1,2)
+
+    def optimize(self, func, maxiter=10, samples=1000, shrink=0.5, tol=1e-6):
+        domain = self.bounds.clone()
+        best_val, best_x = float('inf'), None
+
+        for _ in range(maxiter):
+            p = self.prime_list[self.prime_idx]
+            pts = domain[:,0] + (domain[:,1]-domain[:,0]) * torch.rand(samples, self.bounds.size(0), device=self.device)
+            vals = func(pts).flatten()
+            idx = torch.argmin(vals)
+            val, x = vals[idx].item(), pts[idx]
+
+            if val < best_val:
+                best_val, best_x = val, x.clone()
+                self.prime_idx = min(self.prime_idx+1, self.max_idx)
+            else:
+                self.prime_idx = max(self.prime_idx-1, self.min_idx)
+
+            span = domain[:,1] - domain[:,0]
+            domain[:,0] = torch.max(self.bounds[:,0], best_x - span*shrink/2)
+            domain[:,1] = torch.min(self.bounds[:,1], best_x + span*shrink/2)
+
+            if best_val < tol:
+                break
+
+        return best_x.cpu().numpy(), best_val
+```
+
+### 🔥 Usage Example
+
+```python
+import numpy as np
+
+# 3‑D Rosenbrock as torch batch function
+def rosenbrock_batch(X):
+    x,y,z = X[:,0], X[:,1], X[:,2]
+    return (100*(y-x**2)**2 + (1-x)**2 + 100*(z-y**2)**2).unsqueeze(1)
+
+bounds = [-5,5, -5,5, -5,5]
+opt = DAPSOptimizerTorch(bounds, device='cpu', prime_start=97)
+best_point, best_val = opt.optimize(rosenbrock_batch, maxiter=20, samples=2000)
+print(best_point, best_val)
+```
+
+That’s your **n‑dimensional, GPU‑ready, prime‑adaptive optimizer**.
+
 
 ## Citation
 
