@@ -141,24 +141,146 @@ class DAPSOptimizerTorch:
 
         return best_x.cpu().numpy(), best_val
 ```
+That’s your **n‑dimensional, GPU‑ready, prime‑adaptive optimizer**.
 
-### 🔥 Usage Example
+### 🔥 Another Example
 
 ```python
 import numpy as np
+from sympy import primerange
+import matplotlib.pyplot as plt
 
-# 3‑D Rosenbrock as torch batch function
-def rosenbrock_batch(X):
-    x,y,z = X[:,0], X[:,1], X[:,2]
-    return (100*(y-x**2)**2 + (1-x)**2 + 100*(z-y**2)**2).unsqueeze(1)
+# Define the DAPSFunction container
+class DAPSFunction:
+    def __init__(self, func, name, bounds, dimensions,
+                 true_optimum=None, true_value=None, description=""):
+        self.func = func
+        self.name = name
+        self.bounds = bounds
+        self.dimensions = dimensions
+        self.true_optimum = true_optimum
+        self.true_value = true_value
+        self.description = description
 
-bounds = [-5,5, -5,5, -5,5]
-opt = DAPSOptimizerTorch(bounds, device='cpu', prime_start=97)
-best_point, best_val = opt.optimize(rosenbrock_batch, maxiter=20, samples=2000)
-print(best_point, best_val)
+# DAPS algorithm
+def daps_minimize(daps_func, options=None):
+    if not isinstance(daps_func, DAPSFunction):
+        raise ValueError("daps_minimize expects a DAPSFunction object.")
+
+    if options is None:
+        options = {}
+    maxiter = options.get('maxiter', 100)
+    min_prime_idx = options.get('min_prime_idx', 0)
+    max_prime_idx = options.get('max_prime_idx', 10)
+    tol = options.get('tol', 1e-6)
+    alpha = options.get('shrink_factor', 0.5)
+    improvement_factor = options.get('improvement_factor', 0.9)
+
+    prime_list = list(primerange(2, 2000))
+    prime_index = min_prime_idx
+
+    dims = daps_func.dimensions
+    domain_array = np.array(daps_func.bounds).reshape(dims, 2)
+
+    best_x, best_val = None, np.inf
+    trace = []
+
+    for iteration in range(1, maxiter + 1):
+        p = prime_list[prime_index]
+        grid_axes = [np.linspace(domain_array[d, 0], domain_array[d, 1], p) for d in range(dims)]
+        mesh = np.meshgrid(*grid_axes)
+        samples = np.vstack([m.ravel() for m in mesh]).T
+
+        if dims == 1:
+            evals = np.array([daps_func.func(xi[0]) for xi in samples])
+        else:
+            evals = np.array([daps_func.func(*pt) for pt in samples])
+
+        idx_best = np.argmin(evals)
+        local_best_x = samples[idx_best]
+        local_best_val = evals[idx_best]
+
+        if local_best_val < best_val:
+            ratio_improvement = 0 if best_val == np.inf else (best_val - local_best_val) / abs(best_val)
+            best_val = local_best_val
+            best_x = local_best_x
+
+        if best_val < tol:
+            break
+
+        if best_val < np.inf and ratio_improvement > (1 - improvement_factor):
+            prime_index = min(prime_index + 1, max_prime_idx)
+        else:
+            prime_index = max(prime_index - 1, min_prime_idx)
+
+        for d in range(dims):
+            current_span = domain_array[d, 1] - domain_array[d, 0]
+            domain_array[d, 0] = best_x[d] - alpha * current_span / 2
+            domain_array[d, 1] = best_x[d] + alpha * current_span / 2
+
+        trace.append(best_val)
+
+    return {
+        'x': best_x,
+        'fun': best_val,
+        'nit': iteration,
+        'trace': trace
+    }
+
+# Rastrigin function setup
+def rastrigin_2d(x, y):
+    A = 10
+    return A * 2 + (x ** 2 - A * np.cos(2 * np.pi * x)) + (y ** 2 - A * np.cos(2 * np.pi * y))
+
+rastrigin = DAPSFunction(
+    func=rastrigin_2d,
+    name="Rastrigin 2D",
+    bounds=[-5.12, 5.12, -5.12, 5.12],
+    dimensions=2
+)
+
+# Run DAPS on Rastrigin
+result = daps_minimize(rastrigin, {'maxiter': 100, 'max_prime_idx': 12})
+
+# Plot convergence
+plt.figure(figsize=(8, 5))
+plt.plot(result['trace'], marker='o')
+plt.title("DAPS Convergence on Rastrigin 2D")
+plt.xlabel("Iteration")
+plt.ylabel("Best Function Value")
+plt.grid(True)
+plt.tight_layout()
+
+result, plt.show()
+
+```
+![image](https://github.com/user-attachments/assets/3374b272-1ca1-44eb-b7c6-7a489a44c712)
+
+```text
+2.4715367774273638
+2.4715367774273638
+1.993388867879645
+1.993388867879645
+1.9915709523838139
+1.9905800313279514
+1.9901169338024438
+1.9901169338024438
+1.9900346001631561
+1.9900346001631561
+1.9899208481938544
+1.9899208481938544
+1.9899202403985718
+1.9899181237242267
 ```
 
-That’s your **n‑dimensional, GPU‑ready, prime‑adaptive optimizer**.
+### 💥 **Observation**:
+- **Iteration ~4:** Big drop from **27 → 2.47**
+- **Iteration ~6-10:** Creeps down toward 1.99
+- **Iteration ~17-20:** Hits **1.9899181237242267**
+- **Iteration ~21:** **1.9899181141865796** — stays constant **forever** after this.
+
+### ✅ **Convergence Point: ~21 iterations**
+**After iteration 21**, no further improvement 
 
 
 ## Citation
